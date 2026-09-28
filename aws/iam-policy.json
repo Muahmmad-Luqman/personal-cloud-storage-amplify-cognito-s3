@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::drop-box-demo/private/${cognito-identity.amazonaws.com:sub}/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::drop-box-demo",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "private/${cognito-identity.amazonaws.com:sub}/",
+            "private/${cognito-identity.amazonaws.com:sub}/*"
+          ]
+        }
+      }
+    }
+  ]
+}
