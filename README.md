@@ -2,7 +2,11 @@
 
 A browser-based file manager deployed with AWS Amplify Hosting. Amazon Cognito handles account sign-up and sign-in, a Cognito Identity Pool provides temporary AWS credentials, and Amazon S3 stores each user's files. The frontend is a single `index.html` file.
 
-**Project files:** `index.html` is the editable site; `index.zip` is the original deployment ZIP supplied for this project. `aws/iam-policy.json` and `aws/s3-cors.json` are corrected reference configurations. The original screenshots and uploaded personal files are not included in this repository.
+**Project files:** `index.html` is the editable site; `index.zip` is the original deployment ZIP supplied for this project. `aws/iam-policy.json` and `aws/s3-cors.json` are corrected reference configurations. `architecture.svg` is an original architecture image created for this repository. No user screenshots or files stored inside the user's S3 bucket are included.
+
+## Architecture image
+
+![My Files architecture: Browser, Amplify Hosting, Cognito User Pool and Identity Pool, IAM role, and private Amazon S3 storage](architecture.svg)
 
 ## Features
 
@@ -160,4 +164,4 @@ The supplied frontend, screenshots, and pasted IAM/CORS policies were reviewed f
 - The 200 MB limit is enforced in the browser UI, not as an S3 quota.
 - Search and sorting operate on files returned to this browser; there are no folders, share links, file previews, or version history.
 - Repeated uploads from multiple tabs can still race on the same name. An S3 key with a random ID and separate display-name metadata would make naming more robust.
-- Add screenshots with private email addresses and account details hidden, plus an architecture diagram and test evidence, for a polished GitHub portfolio entry.
+- Add two-user isolation test evidence when available, with personal account details hidden.
