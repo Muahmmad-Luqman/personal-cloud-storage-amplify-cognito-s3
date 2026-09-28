@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/aws-amplify@4.3.46/dist/aws-amplify.min.js"></script>
+<style>
+:root{
+  --bg:#f2f5f7; --surface:#fff; --ink:#17232d; --muted:#5d6b76; --line:#d8e0e6;
+  --accent:#0d6e8c; --accent-ink:#fff; --accent-soft:#e3f1f6; --danger:#b3372f; --danger-soft:#fbeceb; --ok:#1f7a4d;
+  --r:10px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:1.5rem;line-height:1.2;margin:0 0 .25rem;font-weight:700}
+.sub{color:var(--muted);margin:0 0 1.25rem}
+.brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid #6bb7cf;outline-offset:2px}
+
+/* buttons and inputs */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.55rem .9rem;font-weight:600;cursor:pointer}
+.btn:hover{border-color:#b7c4cd}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:#0a5c76}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.sm{padding:.3rem .65rem;font-size:.875rem}
+.btn:disabled{opacity:.6;cursor:progress}
+.link{background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+label{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .3rem}
+input[type=email],input[type=password],input[type=text],input[type=search],select{
+  width:100%;padding:.6rem .75rem;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+input:focus,select:focus{border-color:var(--accent)}
+.pw{position:relative}
+.pw input{padding-right:4.5rem}
+.pw .link{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);font-size:.875rem}
+.err{color:var(--danger);font-size:.9rem;margin:.6rem 0 0;min-height:1.3em}
+form .btn.primary{width:100%;margin-top:.5rem}
+.alt{margin:1rem 0 0;color:var(--muted);font-size:.925rem}
+
+/* auth */
+.auth{min-height:100vh;display:grid;place-items:center;padding:1.5rem}
+.auth-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2rem}
+.auth-card .brand{margin-bottom:1.5rem}
+
+/* app shell */
+.top{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.9rem clamp(1rem,4vw,2rem);background:var(--surface);border-bottom:1px solid var(--line)}
+.who{display:flex;align-items:center;gap:.75rem;color:var(--muted);font-size:.9rem;min-width:0}
+.who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wrap{max-width:860px;margin:0 auto;padding:1.5rem clamp(1rem,4vw,2rem) 4rem}
+
+/* dropzone: the one memorable element */
+.drop{display:flex;flex-direction:column;align-items:center;gap:.25rem;text-align:center;padding:2.25rem 1rem;border:2px dashed #9db3bf;border-radius:14px;background:var(--surface);cursor:pointer;transition:background .15s,border-color .15s}
+.drop strong{font-size:1.1rem}
+.drop span{color:var(--muted);font-size:.925rem}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--accent);background:var(--accent-soft)}
+.drop.over{border-style:solid}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* upload queue */
+.queue{list-style:none;margin:1rem 0 0;padding:0;display:grid;gap:.5rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:.65rem .9rem}
+.q .row{display:flex;justify-content:space-between;gap:1rem;font-size:.925rem}
+.q .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q .st{color:var(--muted);flex:none;max-width:60%;text-align:right}
+.q.fail .st{color:var(--danger)}
+.q.done .st{color:var(--ok)}
+.bar{height:5px;background:var(--line);border-radius:3px;margin-top:.5rem;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+
+/* toolbar and list */
+.tools{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin:2rem 0 .75rem}
+.tools .find{flex:1 1 200px}
+.tools select{width:auto}
+.count{color:var(--muted);font-size:.9rem;margin:0 0 .5rem}
+.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.item{display:flex;align-items:center;gap:.9rem;padding:.75rem 1rem;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.ext{flex:none;width:2.6rem;height:2.6rem;border-radius:8px;display:grid;place-items:center;font-size:.7rem;font-weight:700;background:#e8eef2;color:#3b4b57}
+.ext.img{background:#e2f3ea;color:#1c6b43}
+.ext.doc{background:#e3edf9;color:#2350a0}
+.ext.zip{background:#fbf0dc;color:#8a5a0a}
+.meta{flex:1;min-width:0}
+.meta b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta small{color:var(--muted)}
+.acts{display:flex;gap:.4rem;flex:none;align-items:center}
+.acts .ask{font-size:.875rem;color:var(--danger);font-weight:600;margin-right:.25rem}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:1.05rem;margin-bottom:.25rem}
+.skel{height:64px;border-top:1px solid var(--line);background:linear-gradient(90deg,#f2f5f7 25%,#e6ecf0 50%,#f2f5f7 75%);background-size:200% 100%;animation:sh 1.2s linear infinite}
+.skel:first-child{border-top:0}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* toasts */
+.toasts{position:fixed;left:50%;bottom:1.25rem;transform:translateX(-50%);display:grid;gap:.5rem;z-index:10;width:min(92vw,420px)}
+.toast{background:var(--ink);color:#fff;padding:.7rem 1rem;border-radius:10px;font-size:.925rem}
+.toast.bad{background:var(--danger)}
+
+@media (max-width:520px){
+  .item{flex-wrap:wrap}
+  .acts{width:100%;justify-content:flex-end}
+  .who span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<!-- Sign in and account recovery -->
+<main id="auth" class="auth" hidden>
+  <div class="auth-card">
+    <div class="brand">My Files</div>
+
+    <section id="p-signin">
+      <h1>Sign in</h1>
+      <p class="sub">Your files are private to your account.</p>
+      <form novalidate>
+        <label for="si-email">Email</label>
+        <input id="si-email" type="email" autocomplete="email" required>
+        <label for="si-pass">Password</label>
+        <div class="pw"><input id="si-pass" type="password" autocomplete="current-password" required><button type="button" class="link" data-toggle="si-pass">Show</button></div>
+        <p class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Sign in</button>
+      </form>
+      <p class="alt"><button class="link" data-go="forgot">Forgot your password?</button></p>
+      <p class="alt">New here? <button class="link" data-go="signup">Create an account</button></p>
+    </section>
+
+    <section id="p-signup" hidden>
+      <h1>Create your account</h1>
+      <p class="sub">We will email you a code to confirm it.</p>
+      <form novalidate>
+        <label for="su-email">Email</label>
+        <input id="su-email" type="email" autocomplete="email" required>
+        <label for="su-pass">Password</label>
+        <div class="pw"><input id="su-pass" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="link" data-toggle="su-pass">Show</button></div>
+        <p class="sub" style="margin:.4rem 0 0;font-size:.85rem">Use at least 8 characters.</p>
+        <p class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Create account</button>
+      </form>
+      <p class="alt">Already have an account? <button class="link" data-go="signin">Sign in</button></p>
+    </section>
+
+    <section id="p-confirm" hidden>
+      <h1>Check your email</h1>
+      <p class="sub">Enter the 6 digit code we sent to <span class="mail"></span>.</p>
+      <form novalidate>
+        <label for="cf-code">Confirmation code</label>
+        <input id="cf-code" type="text" inputmode="numeric" autocomplete="one-time-code" required>
+        <p class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Confirm email</button>
+      </form>
+      <p class="alt">No code? <button class="link" id="resend">Send a new one</button></p>
+    </section>
+
+    <section id="p-forgot" hidden>
+      <h1>Reset your password</h1>
+      <p class="sub">We will email you a code to set a new one.</p>
+      <form novalidate>
+        <label for="fg-email">Email</label>
+        <input id="fg-email" type="email" autocomplete="email" required>
+        <p class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Send reset code</button>
+      </form>
+      <p class="alt"><button class="link" data-go="signin">Back to sign in</button></p>
+    </section>
+
+    <section id="p-reset" hidden>
+      <h1>Choose a new password</h1>
+      <p class="sub">Enter the code sent to <span class="mail"></span>.</p>
+      <form novalidate>
+        <label for="rs-code">Reset code</label>
+        <input id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" required>
+        <label for="rs-pass">New password</label>
+        <div class="pw"><input id="rs-pass" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="link" data-toggle="rs-pass">Show</button></div>
+        <p class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Save new password</button>
+      </form>
+    </section>
+  </div>
+</main>
+
+<!-- File manager -->
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand">My Files</div>
+    <div class="who"><span id="who"></span><button class="btn sm" id="signout">Sign out</button></div>
+  </header>
+  <main class="wrap">
+    <label class="drop" id="drop">
+      <input class="sr" type="file" id="file" multiple>
+      <strong>Drop files here or click to choose</strong>
+      <span>Up to 200 MB each. Files with the same name are saved as a copy.</span>
+    </label>
+    <ul class="queue" id="queue"></ul>
+
+    <div class="tools">
+      <div class="find"><label class="sr" for="q">Search files</label><input id="q" type="search" placeholder="Search files"></div>
+      <div><label class="sr" for="sort">Sort by</label>
+        <select id="sort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name">Name</option>
+          <option value="size">Largest first</option>
+        </select>
+      </div>
+    </div>
+    <p class="count" id="count"></p>
+    <ul class="list" id="list"></ul>
+  </main>
+</div>
+
+<script>
+const { Amplify, Auth, Storage } = window.aws_amplify;
+
+Amplify.configure({
+  Auth: {
+    region: 'eu-north-1',
+    userPoolId: 'eu-north-1_2f2OkNE4D',
+    userPoolWebClientId: '45hkac7ch386gq1eaj0r9a31d0',
+    identityPoolId: 'eu-north-1:203d7840-8ece-4112-8597-193a35c5bb17'
+  },
+  Storage: {
+    AWSS3: { bucket: 'drop-box-demo', region: 'eu-north-1' }
+  }
+});
+
+const $ = id => document.getElementById(id);
+const MAX_BYTES = 200 * 1024 * 1024;
+const S = { email: '', pass: '', files: [], query: '', sort: 'newest', confirmKey: null };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+/* helpers */
+function toast(msg, bad) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = msg;
+  $('toasts').append(t);
+  setTimeout(() => t.remove(), 4500);
+}
+function fmtSize(n) {
+  if (n < 1024) return n + ' B';
+  const u = ['KB', 'MB', 'GB']; let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < 2);
+  return n.toFixed(n < 10 ? 1 : 0) + ' ' + u[i];
+}
+const fmtDate = d => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+function friendly(e) {
+  const map = {
+    NotAuthorizedException: 'Incorrect email or password.',
+    UserNotFoundException: 'No account found for this email.',
+    UsernameExistsException: 'An account with this email already exists. Try signing in.',
+    CodeMismatchException: 'That code is not correct. Check it and try again.',
+    ExpiredCodeException: 'That code has expired. Request a new one.',
+    InvalidPasswordException: 'Password is too weak. Use at least 8 characters with a mix of letters and numbers.',
+    InvalidParameterException: 'Check the email and password you entered.',
+    LimitExceededException: 'Too many attempts. Wait a few minutes and try again.'
+  };
+  return map[e.code] || e.message || 'Something went wrong. Try again.';
+}
+
+/* auth views */
+const panels = ['signin', 'signup', 'confirm', 'forgot', 'reset'];
+function go(name) {
+  panels.forEach(p => $('p-' + p).hidden = p !== name);
+  document.querySelectorAll('.err').forEach(e => e.textContent = '');
+  document.querySelectorAll('.mail').forEach(m => m.textContent = S.email);
+  const first = $('p-' + name).querySelector('input');
+  if (first) first.focus();
+}
+function showAuth() { $('app').hidden = true; $('auth').hidden = false; go('signin'); }
+
+async function run(form, fn) {
+  const btn = form.querySelector('.primary');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Working...';
+  form.querySelector('.err').textContent = '';
+  try { await fn(); }
+  catch (e) { form.querySelector('.err').textContent = friendly(e); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+const val = id => $(id).value.trim();
+
+async function finishSignIn(email, pass) {
+  await Auth.signIn(email, pass);
+  enterApp(await Auth.currentAuthenticatedUser());
+}
+
+$('p-signin').querySelector('form').onsubmit = e => { e.preventDefault(); run(e.target, async () => {
+  const email = val('si-email');
+  try { await finishSignIn(email, $('si-pass').value); }
+  catch (err) {
+    if (err.code !== 'UserNotConfirmedException') throw err;
+    S.email = email; S.pass = $('si-pass').value;
+    await Auth.resendSignUp(email);
+    go('confirm'); toast('Your email is not confirmed yet. We sent a new code.');
+  }
+}); };
+
+$('p-signup').querySelector('form').onsubmit = e => { e.preventDefault(); run(e.target, async () => {
+  const email = val('su-email'), pass = $('su-pass').value;
+  if (pass.length < 8) throw { message: 'Use at least 8 characters for your password.' };
+  await Auth.signUp({ username: email, password: pass, attributes: { email } });
+  S.email = email; S.pass = pass;
+  go('confirm');
+}); };
+
+$('p-confirm').querySelector('form').onsubmit = e => { e.preventDefault(); run(e.target, async () => {
+  await Auth.confirmSignUp(S.email, val('cf-code'));
+  if (S.pass) { const p = S.pass; S.pass = ''; await finishSignIn(S.email, p); toast('Email confirmed. Welcome!'); }
+  else { go('signin'); toast('Email confirmed. Sign in to continue.'); }
+}); };
+
+$('resend').onclick = async () => {
+  try { await Auth.resendSignUp(S.email); toast('New code sent to ' + S.email); }
+  catch (e) { toast(friendly(e), true); }
+};
+
+$('p-forgot').querySelector('form').onsubmit = e => { e.preventDefault(); run(e.target, async () => {
+  S.email = val('fg-email');
+  await Auth.forgotPassword(S.email);
+  go('reset');
+}); };
+
+$('p-reset').querySelector('form').onsubmit = e => { e.preventDefault(); run(e.target, async () => {
+  await Auth.forgotPasswordSubmit(S.email, val('rs-code'), $('rs-pass').value);
+  go('signin'); toast('Password updated. Sign in with your new password.');
+}); };
+
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go);
+  const t = e.target.closest('[data-toggle]');
+  if (t) { const i = $(t.dataset.toggle); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; t.textContent = show ? 'Hide' : 'Show'; }
+});
+
+$('signout').onclick = async () => {
+  await Auth.signOut();
+  S.files = []; S.pass = '';
+  showAuth();
+};
+
+/* app */
+async function enterApp(user) {
+  $('auth').hidden = true; $('app').hidden = false;
+  $('who').textContent = (user.attributes && user.attributes.email) || user.username;
+  await loadFiles();
+}
+
+async function loadFiles() {
+  $('list').innerHTML = '<li class="skel"></li><li class="skel"></li><li class="skel"></li>';
+  $('count').textContent = '';
+  try {
+    const res = await Storage.list('', { level: 'private', pageSize: 'ALL' });
+    const items = Array.isArray(res) ? res : res.results;
+    S.files = items.filter(o => o.key && !o.key.endsWith('/')).map(o => ({
+      key: o.key, size: o.size || 0, date: o.lastModified ? new Date(o.lastModified) : new Date(0)
+    }));
+    render();
+  } catch (e) {
+    console.error('List failed', e);
+    $('list').innerHTML = '<li class="empty"><b>Could not load your files</b><button class="btn" id="retry">Try again</button></li>';
+    $('retry').onclick = loadFiles;
+  }
+}
+
+function kind(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (/^(png|jpe?g|gif|webp|svg|heic)$/.test(ext)) return 'img';
+  if (/^(pdf|docx?|txt|md|xlsx?|pptx?|csv)$/.test(ext)) return 'doc';
+  if (/^(zip|rar|7z|tar|gz)$/.test(ext)) return 'zip';
+  return '';
+}
+
+function render() {
+  const q = S.query.trim().toLowerCase();
+  const sorts = {
+    newest: (a, b) => b.date - a.date,
+    oldest: (a, b) => a.date - b.date,
+    name: (a, b) => a.key.localeCompare(b.key),
+    size: (a, b) => b.size - a.size
+  };
+  const rows = S.files.filter(f => f.key.toLowerCase().includes(q)).sort(sorts[S.sort]);
+  const total = S.files.reduce((n, f) => n + f.size, 0);
+  $('count').textContent = S.files.length
+    ? `${S.files.length} ${S.files.length === 1 ? 'file' : 'files'}, ${fmtSize(total)} used` + (q ? ` (${rows.length} shown)` : '')
+    : '';
+
+  if (!S.files.length) {
+    $('list').innerHTML = '<li class="empty"><b>No files yet</b>Drop a file above to add your first one.</li>';
+    return;
+  }
+  if (!rows.length) {
+    $('list').innerHTML = `<li class="empty"><b>No matches</b>Nothing named "${esc(S.query)}".</li>`;
+    return;
+  }
+  $('list').innerHTML = rows.map(f => {
+    const ext = f.key.includes('.') ? f.key.split('.').pop().slice(0, 4).toUpperCase() : 'FILE';
+    const k = esc(f.key);
+    const confirming = S.confirmKey === f.key;
+    return `<li class="item">
+      <div class="ext ${kind(f.key)}" aria-hidden="true">${esc(ext)}</div>
+      <div class="meta"><b title="${k}">${k}</b><small>${fmtSize(f.size)}, added ${fmtDate(f.date)}</small></div>
+      <div class="acts">${confirming
+        ? `<span class="ask">Delete this file?</span>
+           <button class="btn sm danger" data-act="del-yes" data-key="${k}">Delete</button>
+           <button class="btn sm" data-act="del-no">Cancel</button>`
+        : `<button class="btn sm" data-act="get" data-key="${k}">Download</button>
+           <button class="btn sm" data-act="del" data-key="${k}" aria-label="Delete ${k}">Delete</button>`}
+      </div></li>`;
+  }).join('');
+}
+
+$('list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const key = b.dataset.key;
+  if (b.dataset.act === 'del') { S.confirmKey = key; render(); }
+  else if (b.dataset.act === 'del-no') { S.confirmKey = null; render(); }
+  else if (b.dataset.act === 'del-yes') {
+    b.disabled = true; b.textContent = 'Deleting...';
+    try {
+      await Storage.remove(key, { level: 'private' });
+      S.files = S.files.filter(f => f.key !== key);
+      toast('Deleted ' + key);
+    } catch (err) { toast('Could not delete ' + key, true); }
+    S.confirmKey = null; render();
+  }
+  else if (b.dataset.act === 'get') {
+    const label = b.textContent; b.disabled = true; b.textContent = 'Preparing...';
+    try {
+      const url = await Storage.get(key, {
+        level: 'private', expires: 60,
+        contentDisposition: "attachment; filename*=UTF-8''" + encodeURIComponent(key)
+      });
+      const a = document.createElement('a'); a.href = url; a.download = key; document.body.append(a); a.click(); a.remove();
+    } catch (err) { toast('Could not download ' + key, true); }
+    b.disabled = false; b.textContent = label;
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.confirmKey) { S.confirmKey = null; render(); }
+});
+
+$('q').oninput = e => { S.query = e.target.value; render(); };
+$('sort').onchange = e => { S.sort = e.target.value; render(); };
+
+/* uploads */
+function uniqueName(name, taken) {
+  if (!taken.has(name)) return name;
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+  let i = 1;
+  while (taken.has(`${base} (${i})${ext}`)) i++;
+  return `${base} (${i})${ext}`;
+}
+
+async function uploadFiles(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+  const taken = new Set(S.files.map(f => f.key));
+  let ok = 0;
+
+  await Promise.all(files.map(async file => {
+    const li = document.createElement('li');
+    li.className = 'q';
+    li.innerHTML = '<div class="row"><span class="nm"></span><span class="st">Waiting</span></div><div class="bar"><i></i></div>';
+    li.querySelector('.nm').textContent = file.name;
+    $('queue').append(li);
+    const st = li.querySelector('.st'), bar = li.querySelector('.bar i');
+
+    if (file.size > MAX_BYTES) { li.classList.add('fail'); st.textContent = 'Too large (200 MB max)'; return; }
+    const key = uniqueName(file.name, taken);
+    taken.add(key);
+    try {
+      st.textContent = '0%';
+      await Storage.put(key, file, {
+        level: 'private', contentType: file.type || 'application/octet-stream',
+        progressCallback: p => { const pct = Math.round(p.loaded / p.total * 100); bar.style.width = pct + '%'; st.textContent = pct + '%'; }
+      });
+      bar.style.width = '100%'; li.classList.add('done'); st.textContent = 'Done'; ok++;
+      setTimeout(() => li.remove(), 2500);
+    } catch (e) {
+      console.error('Upload failed', e);
+      const why = (e && (e.message || e.code)) || String(e);
+      li.classList.add('fail'); st.textContent = 'Failed: ' + why.slice(0, 70); st.title = why;
+    }
+  }));
+
+  if (ok) { toast(ok === 1 ? 'Uploaded 1 file' : `Uploaded ${ok} files`); await loadFiles(); }
+  $('file').value = '';
+}
+
+$('file').onchange = e => uploadFiles(e.target.files);
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => uploadFiles(e.dataTransfer.files));
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+/* start: restore session if there is one */
+(async () => {
+  try { enterApp(await Auth.currentAuthenticatedUser()); }
+  catch (e) { showAuth(); }
+})();
+</script>
+</body>
+</html>
